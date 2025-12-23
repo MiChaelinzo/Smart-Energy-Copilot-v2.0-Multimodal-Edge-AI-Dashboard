@@ -1,0 +1,37 @@
+# Core dependencies
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.5.0
+sqlalchemy==2.0.23
+alembic==1.13.1
+
+# AI/ML dependencies
+torch==2.5.1
+transformers==4.36.0
+paddlepaddle==2.5.2
+paddleocr==2.7.3
+
+# IoT and communication
+paho-mqtt==1.6.1
+pymodbus==3.5.2
+requests==2.31.0
+
+# Data processing
+pandas==2.1.4
+numpy==1.24.4
+pillow==10.1.0
+PyMuPDF==1.23.8
+
+# Testing
+pytest==7.4.3
+hypothesis==6.92.1
+pytest-asyncio==0.21.1
+
+# Logging and configuration
+structlog==23.2.0
+python-dotenv==1.0.0
+
+# Development
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1
