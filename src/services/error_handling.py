@@ -168,11 +168,46 @@ def retry_with_backoff(
     return decorator
 
 
+class SystemHealthMetrics:
+    """System health metrics tracking."""
+    
+    def __init__(self):
+        self.error_counts: Dict[str, int] = {}
+        self.response_times: Dict[str, List[float]] = {}
+        self.resource_usage: Dict[str, float] = {}
+        self.last_health_check = datetime.now()
+        
+    def record_error(self, service_name: str):
+        """Record an error for a service."""
+        self.error_counts[service_name] = self.error_counts.get(service_name, 0) + 1
+    
+    def record_response_time(self, service_name: str, response_time: float):
+        """Record response time for a service."""
+        if service_name not in self.response_times:
+            self.response_times[service_name] = []
+        self.response_times[service_name].append(response_time)
+        # Keep only last 100 measurements
+        if len(self.response_times[service_name]) > 100:
+            self.response_times[service_name] = self.response_times[service_name][-100:]
+    
+    def get_error_rate(self, service_name: str, time_window_minutes: int = 60) -> float:
+        """Calculate error rate for a service."""
+        # Simplified calculation - in production would use time-based windows
+        total_errors = self.error_counts.get(service_name, 0)
+        return min(total_errors / 100.0, 1.0)  # Normalize to 0-1 range
+    
+    def get_avg_response_time(self, service_name: str) -> float:
+        """Get average response time for a service."""
+        times = self.response_times.get(service_name, [])
+        return sum(times) / len(times) if times else 0.0
+
+
 class ErrorHandler:
     """Centralized error handling and logging."""
     
     def __init__(self):
         self.error_history: List[ErrorInfo] = []
+        self.metrics = SystemHealthMetrics()
         self.user_message_templates = {
             "ocr_processing_error": "We encountered an issue processing your document. Please ensure the image is clear and try again.",
             "iot_connection_error": "Unable to connect to your IoT device. Please check the device status and network connection.",
@@ -195,6 +230,9 @@ class ErrorHandler:
         """Handle and log error with context."""
         error_id = f"{context.service_name}_{int(time.time())}"
         error_type = type(error).__name__
+        
+        # Record metrics
+        self.metrics.record_error(context.service_name)
         
         # Determine user-friendly message
         user_message = self._get_user_message(error_type, str(error))
@@ -226,7 +264,47 @@ class ErrorHandler:
         if len(self.error_history) > 1000:
             self.error_history = self.error_history[-1000:]
         
+        # Trigger alerts for critical errors
+        if severity == ErrorSeverity.CRITICAL:
+            self._trigger_alert(error_info)
+        
         return error_info
+    
+    def _trigger_alert(self, error_info: ErrorInfo):
+        """Trigger alert for critical errors."""
+        logger.critical(
+            f"CRITICAL ERROR ALERT: {error_info.error_type} in {error_info.service_name}",
+            extra={
+                "error_id": error_info.error_id,
+                "service": error_info.service_name,
+                "operation": error_info.operation,
+                "user_message": error_info.user_message
+            }
+        )
+    
+    def get_service_health_summary(self, service_name: str) -> Dict[str, Any]:
+        """Get health summary for a specific service."""
+        error_rate = self.metrics.get_error_rate(service_name)
+        avg_response_time = self.metrics.get_avg_response_time(service_name)
+        
+        # Determine health status
+        if error_rate > 0.1 or avg_response_time > 5.0:
+            status = ServiceStatus.UNHEALTHY
+        elif error_rate > 0.05 or avg_response_time > 2.0:
+            status = ServiceStatus.DEGRADED
+        else:
+            status = ServiceStatus.HEALTHY
+        
+        return {
+            "service_name": service_name,
+            "status": status.value,
+            "error_rate": error_rate,
+            "avg_response_time": avg_response_time,
+            "recent_errors": [
+                error for error in self.error_history[-10:]
+                if error.service_name == service_name
+            ]
+        }
     
     def _get_user_message(self, error_type: str, error_message: str) -> str:
         """Generate user-friendly error message."""
@@ -437,7 +515,7 @@ class GracefulDegradation:
         if not self.should_degrade_service(resource_usage):
             return
         
-        # Disable features in reverse priority order
+        # Disable features in reverse priority order, but skip core features (priority 1-3)
         sorted_features = sorted(
             self.feature_priorities.items(),
             key=lambda x: x[1],
@@ -445,6 +523,10 @@ class GracefulDegradation:
         )
         
         for feature, priority in sorted_features:
+            # Skip core features (priority 1-3) - they should never be disabled
+            if priority <= 3:
+                continue
+                
             if feature not in self.disabled_features:
                 self.disabled_features.add(feature)
                 logger.warning(f"Disabling feature '{feature}' due to resource constraints")
@@ -461,20 +543,121 @@ class GracefulDegradation:
         if self.should_degrade_service(resource_usage):
             return  # Still under resource pressure
         
-        # Re-enable features in priority order
+        # Re-enable features in priority order (only non-core features that were disabled)
         sorted_features = sorted(
             self.feature_priorities.items(),
             key=lambda x: x[1]
         )
         
         for feature, priority in sorted_features:
-            if feature in self.disabled_features:
+            # Only restore non-core features that were previously disabled
+            if feature in self.disabled_features and priority > 3:
                 self.disabled_features.remove(feature)
                 logger.info(f"Re-enabling feature '{feature}' - resources available")
     
     def is_feature_enabled(self, feature: str) -> bool:
         """Check if a feature is currently enabled."""
         return feature not in self.disabled_features
+
+
+# Global instances
+error_handler = ErrorHandler()
+health_monitor = HealthMonitor()
+graceful_degradation = GracefulDegradation()
+
+
+def with_error_handling(service_name: str, operation: str = None):
+    """Decorator to add comprehensive error handling to service methods."""
+    def decorator(func: Callable) -> Callable:
+        @functools.wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            start_time = time.time()
+            op_name = operation or func.__name__
+            
+            context = ErrorContext(
+                service_name=service_name,
+                operation=op_name,
+                metadata={"function": func.__name__, "args_count": len(args)}
+            )
+            
+            try:
+                # Check if feature is enabled (graceful degradation)
+                if not graceful_degradation.is_feature_enabled(service_name):
+                    raise ResourceConstraintError(f"Service {service_name} is temporarily disabled due to resource constraints")
+                
+                result = await func(*args, **kwargs)
+                
+                # Record successful response time
+                response_time = time.time() - start_time
+                error_handler.metrics.record_response_time(service_name, response_time)
+                
+                return result
+                
+            except Exception as e:
+                # Determine error severity
+                if isinstance(e, (ConnectionError, TimeoutError, IoTConnectionError)):
+                    severity = ErrorSeverity.HIGH
+                elif isinstance(e, (ValidationError, OCRProcessingError)):
+                    severity = ErrorSeverity.MEDIUM
+                elif isinstance(e, (ResourceConstraintError, DatabaseError)):
+                    severity = ErrorSeverity.HIGH
+                else:
+                    severity = ErrorSeverity.MEDIUM
+                
+                # Handle error
+                error_info = error_handler.handle_error(e, context, severity)
+                
+                # Re-raise with additional context
+                raise type(e)(f"{error_info.user_message} (Error ID: {error_info.error_id})") from e
+        
+        @functools.wraps(func)
+        def sync_wrapper(*args, **kwargs):
+            start_time = time.time()
+            op_name = operation or func.__name__
+            
+            context = ErrorContext(
+                service_name=service_name,
+                operation=op_name,
+                metadata={"function": func.__name__, "args_count": len(args)}
+            )
+            
+            try:
+                # Check if feature is enabled (graceful degradation)
+                if not graceful_degradation.is_feature_enabled(service_name):
+                    raise ResourceConstraintError(f"Service {service_name} is temporarily disabled due to resource constraints")
+                
+                result = func(*args, **kwargs)
+                
+                # Record successful response time
+                response_time = time.time() - start_time
+                error_handler.metrics.record_response_time(service_name, response_time)
+                
+                return result
+                
+            except Exception as e:
+                # Determine error severity
+                if isinstance(e, (ConnectionError, TimeoutError, IoTConnectionError)):
+                    severity = ErrorSeverity.HIGH
+                elif isinstance(e, (ValidationError, OCRProcessingError)):
+                    severity = ErrorSeverity.MEDIUM
+                elif isinstance(e, (ResourceConstraintError, DatabaseError)):
+                    severity = ErrorSeverity.HIGH
+                else:
+                    severity = ErrorSeverity.MEDIUM
+                
+                # Handle error
+                error_info = error_handler.handle_error(e, context, severity)
+                
+                # Re-raise with additional context
+                raise type(e)(f"{error_info.user_message} (Error ID: {error_info.error_id})") from e
+        
+        # Return appropriate wrapper based on function type
+        if asyncio.iscoroutinefunction(func):
+            return async_wrapper
+        else:
+            return sync_wrapper
+    
+    return decorator
 
 
 # Global instances

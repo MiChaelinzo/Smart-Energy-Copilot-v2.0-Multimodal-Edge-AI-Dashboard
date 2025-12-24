@@ -20,6 +20,10 @@ except ImportError:
     PaddleOCR = None
 
 from src.config.logging import get_logger
+from src.services.error_handling import (
+    with_error_handling, OCRProcessingError, ValidationError,
+    ErrorContext, ErrorSeverity, error_handler
+)
 
 logger = get_logger(__name__)
 
@@ -109,6 +113,7 @@ class OCRProcessingEngine:
             ]
         }
     
+    @with_error_handling("ocr_service", "detect_format")
     def detect_format(self, file_content: bytes, filename: str = "") -> DocumentFormat:
         """Detect document format from content and filename.
         
@@ -140,11 +145,12 @@ class OCRProcessingEngine:
         try:
             Image.open(io.BytesIO(file_content))
             return DocumentFormat.JPEG  # Default to JPEG for unknown image formats
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"Failed to detect image format: {e}")
             
-        raise ValueError("Unsupported document format")
+        raise OCRProcessingError("Unsupported document format. Please use PDF, JPEG, or PNG files.")
     
+    @with_error_handling("ocr_service", "process_document")
     def process_document(self, file_content: bytes, filename: str = "") -> OCRResult:
         """Process document and extract text with OCR.
         
@@ -164,9 +170,12 @@ class OCRProcessingEngine:
             else:
                 return self._process_image(file_content, doc_format)
                 
-        except Exception as e:
-            logger.error(f"Error processing document: {str(e)}")
+        except OCRProcessingError:
+            # Re-raise OCR-specific errors
             raise
+        except Exception as e:
+            logger.error(f"Unexpected error processing document: {str(e)}")
+            raise OCRProcessingError(f"Failed to process document: {str(e)}")
     
     def _process_pdf(self, file_content: bytes, doc_format: DocumentFormat) -> OCRResult:
         """Process PDF document."""

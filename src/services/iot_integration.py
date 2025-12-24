@@ -20,6 +20,10 @@ from src.services.iot_protocols.modbus_handler import ModbusHandler
 from src.database.connection import get_db_session
 from src.models.device import DeviceDB
 from src.models.sensor_reading import SensorReadingDB
+from src.services.error_handling import (
+    with_error_handling, IoTConnectionError, ValidationError,
+    ErrorContext, ErrorSeverity, error_handler, retry_with_backoff
+)
 
 logger = logging.getLogger(__name__)
 
@@ -50,14 +54,15 @@ class IoTIntegrationService:
             "humidity_percent": {"min": 0, "max": 100}
         }
 
+    @with_error_handling("iot_service", "register_device")
+    @retry_with_backoff(max_attempts=3, exceptions=(ConnectionError, TimeoutError))
     async def register_device(self, device: Device) -> bool:
         """Register a new IoT device"""
         try:
             # Create appropriate protocol handler
             handler = self._create_handler(device)
             if not handler:
-                logger.error(f"Unsupported protocol for device {device.device_id}: {device.config.protocol}")
-                return False
+                raise IoTConnectionError(f"Unsupported protocol for device {device.device_id}: {device.config.protocol}")
 
             # Store device and handler
             self.devices[device.device_id] = device
@@ -72,9 +77,12 @@ class IoTIntegrationService:
             logger.info(f"Registered device {device.device_id} with protocol {device.config.protocol}")
             return True
 
+        except IoTConnectionError:
+            # Re-raise IoT-specific errors
+            raise
         except Exception as e:
             logger.error(f"Failed to register device {device.device_id}: {e}")
-            return False
+            raise IoTConnectionError(f"Device registration failed: {str(e)}")
 
     async def unregister_device(self, device_id: str) -> bool:
         """Unregister an IoT device"""
@@ -101,6 +109,7 @@ class IoTIntegrationService:
             logger.error(f"Failed to unregister device {device_id}: {e}")
             return False
 
+    @with_error_handling("iot_service", "discover_devices")
     async def discover_devices(self, protocols: List[ProtocolType] = None, 
                              discovery_timeout: int = 30) -> DeviceDiscoveryResult:
         """Auto-discover IoT devices using specified protocols"""

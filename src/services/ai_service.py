@@ -23,6 +23,10 @@ import pandas as pd
 from ..models.energy_consumption import EnergyConsumption
 from ..models.sensor_reading import SensorReading
 from ..config.settings import get_settings
+from src.services.error_handling import (
+    with_error_handling, AIProcessingError, ValidationError,
+    ErrorContext, ErrorSeverity, error_handler, retry_with_backoff
+)
 
 logger = logging.getLogger(__name__)
 

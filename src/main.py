@@ -7,6 +7,8 @@ from src.config.settings import settings
 from src.config.logging import setup_logging, get_logger
 from src.components.ocr_api import router as ocr_router
 from src.components.ai_api import router as ai_router
+from src.components.health_api import router as health_router
+from src.services.system_monitor import system_monitor
 
 # Setup logging
 setup_logging()
@@ -32,6 +34,7 @@ app.add_middleware(
 # Include API routers
 app.include_router(ocr_router)
 app.include_router(ai_router)
+app.include_router(health_router)
 
 
 @app.on_event("startup")
@@ -40,6 +43,13 @@ async def startup_event():
     logger.info("Starting Smart Energy Copilot v2.0", 
                 environment=settings.environment,
                 debug=settings.debug)
+    
+    # Start system monitoring
+    try:
+        await system_monitor.start_monitoring()
+        logger.info("System monitoring started successfully")
+    except Exception as e:
+        logger.error(f"Failed to start system monitoring: {e}")
     
     # Initialize AI service
     try:
@@ -55,6 +65,13 @@ async def startup_event():
 async def shutdown_event():
     """Application shutdown event."""
     logger.info("Shutting down Smart Energy Copilot v2.0")
+    
+    # Stop system monitoring
+    try:
+        await system_monitor.stop_monitoring()
+        logger.info("System monitoring stopped")
+    except Exception as e:
+        logger.error(f"Error stopping system monitoring: {e}")
 
 
 @app.get("/")
