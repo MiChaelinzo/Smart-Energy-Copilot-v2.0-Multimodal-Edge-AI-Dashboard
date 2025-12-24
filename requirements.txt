@@ -6,20 +6,20 @@ sqlalchemy==2.0.23
 alembic==1.13.1
 
 # AI/ML dependencies
-torch==2.5.1
-transformers==4.36.0
-paddlepaddle==2.5.2
+torch==2.8.0
+transformers==4.53.0
+paddlepaddle==2.6.2
 paddleocr==2.7.3
 
 # IoT and communication
 paho-mqtt==1.6.1
 pymodbus==3.5.2
-requests==2.31.0
+requests==2.32.4
 
 # Data processing
 pandas==2.1.4
 numpy==1.24.4
-pillow==10.1.0
+pillow==10.3.0
 PyMuPDF==1.23.8
 
 # Security and encryption
@@ -36,6 +36,6 @@ structlog==23.2.0
 python-dotenv==1.0.0
 
 # Development
-black==23.11.0
+black==24.3.0
 flake8==6.1.0
 mypy==1.7.1
