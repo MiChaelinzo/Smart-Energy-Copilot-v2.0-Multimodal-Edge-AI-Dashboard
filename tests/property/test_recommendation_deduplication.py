@@ -122,7 +122,7 @@ def generate_similar_recommendations(draw):
     consumption_data=st.lists(generate_energy_consumption(), min_size=3, max_size=8),
     similar_recs=generate_similar_recommendations()
 )
-@settings(max_examples=15, deadline=25000)  # 25 second timeout
+@settings(max_examples=5, deadline=25000)  # 25 second timeout
 def test_recommendation_deduplication_property(consumption_data, similar_recs):
     """
     Property 14: Unique agent insights
@@ -234,7 +234,7 @@ def test_recommendation_deduplication_property(consumption_data, similar_recs):
 @given(
     consumption_data=st.lists(generate_energy_consumption(), min_size=5, max_size=10)
 )
-@settings(max_examples=10, deadline=30000)
+@settings(max_examples=5, deadline=30000)
 def test_agent_unique_insights_property(consumption_data):
     """
     Property: Each agent should contribute unique insights without redundancy

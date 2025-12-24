@@ -84,6 +84,19 @@ class BaseProtocolHandler(ABC):
         """
         pass
 
+    async def send_command(self, command: Dict[str, Any]) -> bool:
+        """
+        Send command to the device (optional, not all protocols support this)
+        
+        Args:
+            command: Command dictionary to send to device
+            
+        Returns:
+            bool: True if command sent successfully, False otherwise
+        """
+        self.logger.warning(f"Command sending not implemented for {self.__class__.__name__}")
+        return False
+
     async def get_device_status(self) -> DeviceStatus:
         """
         Get current device status

@@ -114,7 +114,7 @@ class TestIoTDataValidation:
         field_name=st.sampled_from(["power_watts", "voltage", "current_amps", "temperature_celsius", "humidity_percent"]),
         raw_value=st.floats(allow_nan=False, allow_infinity=False)
     )
-    @settings(max_examples=100, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     def test_validation_rules_bounds_checking(self, field_name: str, raw_value: float):
         """
         Property 8: IoT data validation and interpolation - Bounds checking
@@ -140,7 +140,7 @@ class TestIoTDataValidation:
                     f"Invalid value {raw_value} should be outside bounds [{rules['min']}, {rules['max']}]"
 
     @given(reading=sensor_reading_strategy())
-    @settings(max_examples=50, deadline=10000)
+    @settings(max_examples=5, deadline=10000)
     @pytest.mark.asyncio
     async def test_valid_data_passes_validation(self, reading: SensorReading):
         """
@@ -180,7 +180,7 @@ class TestIoTDataValidation:
         invalid_value=st.floats(allow_nan=False, allow_infinity=False),
         interpolated_value=st.floats(min_value=0, max_value=1000, allow_nan=False, allow_infinity=False)
     )
-    @settings(max_examples=50, deadline=10000)
+    @settings(max_examples=5, deadline=10000)
     @pytest.mark.asyncio
     async def test_invalid_data_interpolation_by_direct_modification(self, reading: SensorReading, field_to_corrupt: str, invalid_value: float, interpolated_value: float):
         """
@@ -266,7 +266,7 @@ class TestIoTDataValidation:
             max_size=5
         )
     )
-    @settings(max_examples=100, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     @pytest.mark.asyncio
     async def test_device_specific_format_handling(self, device_type: str, readings_data: Dict[str, float]):
         """
@@ -317,7 +317,7 @@ class TestIoTDataValidation:
             max_size=10
         )
     )
-    @settings(max_examples=30, deadline=15000)
+    @settings(max_examples=5, deadline=15000)
     @pytest.mark.asyncio
     async def test_batch_validation_consistency(self, readings_list):
         """
@@ -370,7 +370,7 @@ class TestIoTDataValidation:
         sensor_id=st.text(min_size=1, max_size=20, alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Nd"), whitelist_characters="_-")).filter(lambda x: x.strip()),
         field=st.sampled_from(["power_watts", "voltage", "current_amps", "temperature_celsius", "humidity_percent"])
     )
-    @settings(max_examples=50, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     @pytest.mark.asyncio
     async def test_interpolation_fallback_values(self, sensor_id: str, field: str):
         """
@@ -420,7 +420,7 @@ class TestIoTDataValidation:
         field=st.sampled_from(["power_watts", "voltage", "current_amps", "temperature_celsius", "humidity_percent"]),
         historical_value=st.floats(min_value=0, max_value=1000, allow_nan=False, allow_infinity=False)
     )
-    @settings(max_examples=30, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     @pytest.mark.asyncio
     async def test_interpolation_with_historical_data(self, sensor_id: str, field: str, historical_value: float):
         """

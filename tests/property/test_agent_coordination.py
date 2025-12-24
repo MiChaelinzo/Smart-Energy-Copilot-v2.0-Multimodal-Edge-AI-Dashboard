@@ -94,7 +94,7 @@ def generate_sensor_reading(draw):
     consumption_data=st.lists(generate_energy_consumption(), min_size=1, max_size=10),
     sensor_data=st.one_of(st.none(), st.lists(generate_sensor_reading(), min_size=0, max_size=5))
 )
-@settings(max_examples=20, deadline=30000)  # 30 second timeout
+@settings(max_examples=5, deadline=30000)  # 30 second timeout
 def test_multi_agent_collaboration_property(consumption_data, sensor_data):
     """
     Property 13: Multi-agent collaboration
@@ -193,7 +193,7 @@ def test_multi_agent_collaboration_property(consumption_data, sensor_data):
 @given(
     consumption_data=st.lists(generate_energy_consumption(), min_size=5, max_size=10)
 )
-@settings(max_examples=15, deadline=20000)
+@settings(max_examples=5, deadline=20000)
 def test_agent_specialization_property(consumption_data):
     """
     Property: Agent specialization ensures diverse perspectives

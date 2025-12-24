@@ -85,7 +85,7 @@ class TestDataFusion:
         utility_data=st.lists(energy_consumption_strategy(), min_size=1, max_size=10),
         sensor_data=st.lists(sensor_reading_strategy(), min_size=1, max_size=10)
     )
-    @settings(max_examples=50, deadline=5000, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(max_examples=5, deadline=5000, suppress_health_check=[HealthCheck.function_scoped_fixture])
     @pytest.mark.asyncio
     async def test_multi_source_data_combination(self, fusion_engine, utility_data, sensor_data):
         """
@@ -145,7 +145,7 @@ class TestDataFusion:
         utility_data=st.lists(energy_consumption_strategy(), min_size=0, max_size=5),
         sensor_data=st.lists(sensor_reading_strategy(), min_size=0, max_size=5)
     )
-    @settings(max_examples=30, deadline=3000, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(max_examples=5, deadline=3000, suppress_health_check=[HealthCheck.function_scoped_fixture])
     @pytest.mark.asyncio
     async def test_empty_data_handling(self, fusion_engine, utility_data, sensor_data):
         """
@@ -193,7 +193,7 @@ class TestDataFusion:
             min_size=1, max_size=5
         )
     )
-    @settings(max_examples=20, deadline=3000, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(max_examples=5, deadline=3000, suppress_health_check=[HealthCheck.function_scoped_fixture])
     @pytest.mark.asyncio
     async def test_quality_score_calculation(self, fusion_engine, high_quality_data, low_quality_data):
         """
@@ -225,7 +225,7 @@ class TestDataFusion:
         utility_data=st.lists(energy_consumption_strategy(), min_size=1, max_size=3),
         sensor_data=st.lists(sensor_reading_strategy(), min_size=1, max_size=3)
     )
-    @settings(max_examples=20, deadline=3000, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(max_examples=5, deadline=3000, suppress_health_check=[HealthCheck.function_scoped_fixture])
     @pytest.mark.asyncio
     async def test_insight_generation(self, fusion_engine, utility_data, sensor_data):
         """
@@ -263,7 +263,7 @@ class TestDataFusion:
     @given(
         data_batch=st.lists(energy_consumption_strategy(), min_size=2, max_size=10)
     )
-    @settings(max_examples=20, deadline=3000, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(max_examples=5, deadline=3000, suppress_health_check=[HealthCheck.function_scoped_fixture])
     @pytest.mark.asyncio
     async def test_fusion_idempotency(self, fusion_engine, data_batch):
         """

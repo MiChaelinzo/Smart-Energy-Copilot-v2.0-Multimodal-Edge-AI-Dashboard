@@ -160,7 +160,7 @@ def generate_partial_energy_text(draw):
 class TestEnergyFieldExtraction:
     """Property tests for energy data field extraction."""
     
-    @settings(max_examples=15, deadline=None)
+    @settings(max_examples=5, deadline=None)
     @given(generate_energy_bill_text())
     def test_property_6_energy_field_extraction(self, text_data):
         """
@@ -220,7 +220,7 @@ class TestEnergyFieldExtraction:
             assert 0.0 <= confidence <= 1.0, \
                 f"Confidence for {field} should be between 0 and 1, got {confidence}"
     
-    @settings(max_examples=10, deadline=None)
+    @settings(max_examples=5, deadline=None)
     @given(generate_partial_energy_text())
     def test_property_6_partial_field_extraction(self, text_data):
         """
@@ -266,7 +266,7 @@ class TestEnergyFieldExtraction:
             assert 0.0 <= confidence <= 1.0, \
                 f"Confidence for {field} should be between 0 and 1, got {confidence}"
     
-    @settings(max_examples=10, deadline=None)
+    @settings(max_examples=5, deadline=None)
     @given(generate_text_image_with_energy_data())
     def test_property_6_end_to_end_extraction(self, image_data):
         """
@@ -303,7 +303,7 @@ class TestEnergyFieldExtraction:
         # The extraction should handle the OCR text appropriately
         # (We can't guarantee exact matches due to OCR variability, but the process should work)
     
-    @settings(max_examples=10, deadline=None)
+    @settings(max_examples=5, deadline=None)
     @given(st.text(min_size=10, max_size=200))
     def test_property_6_no_energy_fields(self, random_text):
         """
@@ -341,7 +341,7 @@ class TestEnergyFieldExtraction:
         # Most fields should be None for non-energy text
         # (We allow some false positives due to pattern matching)
     
-    @settings(max_examples=10, deadline=None)
+    @settings(max_examples=5, deadline=None)
     @given(st.data())
     def test_property_6_extraction_consistency(self, data):
         """

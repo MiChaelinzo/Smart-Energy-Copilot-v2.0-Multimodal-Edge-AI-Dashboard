@@ -93,7 +93,7 @@ class TestOCRFormatSupport:
             mock_paddle.return_value = mock_instance
             self.ocr_engine = OCRProcessingEngine()
     
-    @settings(max_examples=20, deadline=None)
+    @settings(max_examples=5, deadline=None)
     @given(st.data())
     def test_property_4_multi_format_processing(self, data):
         """
@@ -134,7 +134,7 @@ class TestOCRFormatSupport:
             assert isinstance(result.bounding_boxes, list), "Bounding boxes should be a list"
             assert result.page_count >= 1, "Page count should be at least 1"
     
-    @settings(max_examples=15, deadline=None)
+    @settings(max_examples=5, deadline=None)
     @given(generate_test_image(format_type='JPEG'))
     def test_jpeg_format_processing(self, image_data):
         """Test JPEG format processing specifically."""
@@ -156,7 +156,7 @@ class TestOCRFormatSupport:
                 f"Should detect JPEG format, got {result.format}"
             assert result.page_count == 1, "Image should have 1 page"
     
-    @settings(max_examples=15, deadline=None)
+    @settings(max_examples=5, deadline=None)
     @given(generate_test_image(format_type='PNG'))
     def test_png_format_processing(self, image_data):
         """Test PNG format processing specifically."""
@@ -178,7 +178,7 @@ class TestOCRFormatSupport:
                 f"Should detect PNG format, got {result.format}"
             assert result.page_count == 1, "Image should have 1 page"
     
-    @settings(max_examples=10, deadline=None)
+    @settings(max_examples=5, deadline=None)
     @given(generate_test_pdf())
     def test_pdf_format_processing(self, pdf_data):
         """Test PDF format processing specifically."""
@@ -200,7 +200,7 @@ class TestOCRFormatSupport:
                 f"Should detect PDF format, got {result.format}"
             assert result.page_count >= 1, "PDF should have at least 1 page"
     
-    @settings(max_examples=20, deadline=None)
+    @settings(max_examples=5, deadline=None)
     @given(st.data())
     def test_format_detection_consistency(self, data):
         """

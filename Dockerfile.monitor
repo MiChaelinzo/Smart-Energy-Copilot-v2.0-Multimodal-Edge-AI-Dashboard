@@ -1,0 +1,46 @@
+# Lightweight system monitoring container for edge deployment
+FROM python:3.11-alpine
+
+# Install system monitoring tools
+RUN apk add --no-cache \
+    procps \
+    curl \
+    htop \
+    iotop \
+    && rm -rf /var/cache/apk/*
+
+# Install Python monitoring dependencies
+RUN pip install --no-cache-dir \
+    psutil==5.9.6 \
+    asyncio-mqtt==0.13.0 \
+    structlog==23.2.0
+
+# Create monitoring user
+RUN addgroup -g 1001 monitor && \
+    adduser -D -u 1001 -G monitor monitor
+
+# Create directories
+RUN mkdir -p /app/logs /app/scripts && \
+    chown -R monitor:monitor /app
+
+# Copy monitoring scripts
+COPY docker/monitor.py /app/monitor.py
+COPY docker/monitor-entrypoint.sh /app/entrypoint.sh
+
+# Set permissions
+RUN chmod +x /app/entrypoint.sh && \
+    chown -R monitor:monitor /app
+
+# Switch to monitoring user
+USER monitor
+
+# Set working directory
+WORKDIR /app
+
+# Health check
+HEALTHCHECK --interval=60s --timeout=5s --start-period=30s --retries=2 \
+    CMD pgrep -f "python.*monitor.py" || exit 1
+
+# Set entrypoint
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["python", "/app/monitor.py"]

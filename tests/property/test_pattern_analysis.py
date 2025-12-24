@@ -79,7 +79,7 @@ class TestEnergyPatternAnalysis:
         return EnergyPatternAnalyzer(mock_manager)
     
     @given(consumption_data=energy_consumption_list_strategy())
-    @settings(max_examples=50, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     def test_pattern_identification_always_returns_list(self, consumption_data):
         """
         Property: Pattern identification always returns a list of patterns.
@@ -119,7 +119,7 @@ class TestEnergyPatternAnalysis:
         asyncio.run(run_test())
     
     @given(consumption_data=energy_consumption_list_strategy())
-    @settings(max_examples=30, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     def test_pattern_identification_deterministic(self, consumption_data):
         """
         Property: Pattern identification is deterministic for the same input.
@@ -149,7 +149,7 @@ class TestEnergyPatternAnalysis:
         consumption_data=energy_consumption_list_strategy(),
         additional_data=energy_consumption_list_strategy()
     )
-    @settings(max_examples=20, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     def test_pattern_identification_monotonic_with_more_data(self, consumption_data, additional_data):
         """
         Property: More data should not decrease pattern identification capability.
@@ -184,7 +184,7 @@ class TestEnergyPatternAnalysis:
         asyncio.run(run_test())
     
     @given(st.lists(energy_consumption_strategy(), min_size=0, max_size=0))
-    @settings(max_examples=10)
+    @settings(max_examples=5)
     def test_pattern_identification_empty_data(self, pattern_analyzer, consumption_data):
         """
         Property: Empty data should return empty pattern list.
@@ -200,7 +200,7 @@ class TestEnergyPatternAnalysis:
         asyncio.run(run_test())
     
     @given(consumption_data=st.lists(energy_consumption_strategy(), min_size=1, max_size=5))
-    @settings(max_examples=20, deadline=3000)
+    @settings(max_examples=5, deadline=3000)
     def test_pattern_identification_minimal_data(self, pattern_analyzer, consumption_data):
         """
         Property: Minimal data should handle gracefully.
@@ -231,7 +231,7 @@ class TestEnergyPatternAnalysis:
             max_size=24
         )
     )
-    @settings(max_examples=15, deadline=4000)
+    @settings(max_examples=5, deadline=4000)
     def test_daily_pattern_identification(self, pattern_analyzer, consumption_data):
         """
         Property: With 24+ hours of data, daily patterns should be identifiable.

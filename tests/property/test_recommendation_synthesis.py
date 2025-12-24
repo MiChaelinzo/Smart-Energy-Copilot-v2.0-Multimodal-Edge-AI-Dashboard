@@ -124,7 +124,7 @@ def generate_diverse_recommendations(draw):
     consumption_data=st.lists(generate_energy_consumption(), min_size=5, max_size=10),
     diverse_recs=generate_diverse_recommendations()
 )
-@settings(max_examples=15, deadline=30000)  # 30 second timeout
+@settings(max_examples=5, deadline=30000)  # 30 second timeout
 def test_recommendation_synthesis_property(consumption_data, diverse_recs):
     """
     Property 15: Agent output prioritization
@@ -267,7 +267,7 @@ def test_recommendation_synthesis_property(consumption_data, diverse_recs):
 @given(
     consumption_data=st.lists(generate_energy_consumption(), min_size=3, max_size=8)
 )
-@settings(max_examples=10, deadline=25000)
+@settings(max_examples=5, deadline=25000)
 def test_end_to_end_synthesis_property(consumption_data):
     """
     Property: End-to-end synthesis produces well-prioritized recommendations

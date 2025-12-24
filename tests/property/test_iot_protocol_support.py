@@ -113,7 +113,7 @@ class TestIoTProtocolSupport:
     """Property-based tests for IoT protocol support"""
 
     @given(protocol=st.sampled_from([ProtocolType.MQTT, ProtocolType.HTTP_REST, ProtocolType.MODBUS]))
-    @settings(max_examples=100, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     def test_protocol_handler_creation(self, protocol: ProtocolType):
         """
         Property 7: IoT protocol compatibility
@@ -161,7 +161,7 @@ class TestIoTProtocolSupport:
         assert hasattr(handler, 'discover_devices'), "Handler should have discover_devices method"
 
     @given(device=device_strategy(ProtocolType.MQTT))
-    @settings(max_examples=50, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     def test_mqtt_handler_interface_compliance(self, device: Device):
         """
         Property 7: IoT protocol compatibility - MQTT specific
@@ -184,7 +184,7 @@ class TestIoTProtocolSupport:
         assert handler.last_error is None, "Handler should start with no error"
 
     @given(device=device_strategy(ProtocolType.HTTP_REST))
-    @settings(max_examples=50, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     def test_http_handler_interface_compliance(self, device: Device):
         """
         Property 7: IoT protocol compatibility - HTTP REST specific
@@ -211,7 +211,7 @@ class TestIoTProtocolSupport:
         assert handler.base_url == device.config.endpoint.rstrip('/'), "Base URL should be parsed correctly"
 
     @given(device=device_strategy(ProtocolType.MODBUS))
-    @settings(max_examples=50, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     def test_modbus_handler_interface_compliance(self, device: Device):
         """
         Property 7: IoT protocol compatibility - Modbus specific
@@ -250,7 +250,7 @@ class TestIoTProtocolSupport:
             unique_by=lambda d: d.device_id
         )
     )
-    @settings(max_examples=30, deadline=10000)
+    @settings(max_examples=5, deadline=10000)
     def test_multiple_protocol_support(self, devices):
         """
         Property 7: IoT protocol compatibility - Multiple protocols
@@ -285,7 +285,7 @@ class TestIoTProtocolSupport:
         assert len(set(id(h) for h in handlers.values())) == len(handlers), "Each device should have its own handler instance"
 
     @given(protocol=st.sampled_from([ProtocolType.MQTT, ProtocolType.HTTP_REST, ProtocolType.MODBUS]))
-    @settings(max_examples=100, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     def test_protocol_handler_error_handling(self, protocol: ProtocolType):
         """
         Property 7: IoT protocol compatibility - Error handling

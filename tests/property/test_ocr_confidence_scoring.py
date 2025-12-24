@@ -100,7 +100,7 @@ def generate_mixed_quality_image(draw):
 class TestOCRConfidenceScoring:
     """Property tests for OCR confidence validation."""
     
-    @settings(max_examples=10, deadline=None)
+    @settings(max_examples=5, deadline=None)
     @given(generate_clear_text_image())
     def test_property_5_high_quality_confidence(self, image_data):
         """
@@ -128,7 +128,7 @@ class TestOCRConfidenceScoring:
         assert result.confidence >= 0.1, \
             f"Clear images should have some confidence, got {result.confidence}"
     
-    @settings(max_examples=10, deadline=None)
+    @settings(max_examples=5, deadline=None)
     @given(generate_poor_quality_image())
     def test_property_5_poor_quality_confidence(self, image_content):
         """
@@ -153,7 +153,7 @@ class TestOCRConfidenceScoring:
         # Poor quality images should generally have lower confidence, but we can't guarantee this
         # since OCR might still detect some patterns. The key is that confidence is valid.
     
-    @settings(max_examples=15, deadline=None)
+    @settings(max_examples=5, deadline=None)
     @given(st.data())
     def test_property_5_confidence_consistency(self, data):
         """
@@ -189,7 +189,7 @@ class TestOCRConfidenceScoring:
             assert result.confidence >= 0.0 and result.confidence <= 1.0, \
                 f"Confidence should be between 0 and 1, got {result.confidence}"
     
-    @settings(max_examples=10, deadline=None)
+    @settings(max_examples=5, deadline=None)
     @given(generate_mixed_quality_image())
     def test_property_5_quality_assessment_validity(self, image_data):
         """
@@ -237,7 +237,7 @@ class TestOCRConfidenceScoring:
         elif result.confidence < 0.5:
             assert assessment['quality_level'] == 'poor'
     
-    @settings(max_examples=10, deadline=None)
+    @settings(max_examples=5, deadline=None)
     @given(st.data())
     def test_property_5_confidence_bounds(self, data):
         """

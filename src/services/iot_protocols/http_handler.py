@@ -23,57 +23,79 @@ class HTTPHandler(BaseProtocolHandler):
         super().__init__(device)
         self.session: Optional[aiohttp.ClientSession] = None
         self.base_url = self.device.config.endpoint.rstrip('/')
+        self._reconnect_attempts = 0
+        self._max_reconnect_attempts = device.config.retry_attempts
 
     async def connect(self) -> bool:
-        """Initialize HTTP session"""
-        try:
-            # Create session with timeout
-            timeout = aiohttp.ClientTimeout(total=self.device.config.timeout)
-            
-            # Set up authentication headers if credentials provided
-            headers = {}
-            if self.device.config.credentials:
-                auth_type = self.device.config.credentials.get("auth_type", "basic")
-                if auth_type == "basic":
-                    username = self.device.config.credentials.get("username")
-                    password = self.device.config.credentials.get("password")
-                    if username and password:
-                        auth = aiohttp.BasicAuth(username, password)
-                        self.session = aiohttp.ClientSession(timeout=timeout, auth=auth)
-                    else:
-                        self.session = aiohttp.ClientSession(timeout=timeout)
-                elif auth_type == "bearer":
-                    token = self.device.config.credentials.get("token")
-                    if token:
-                        headers["Authorization"] = f"Bearer {token}"
-                        self.session = aiohttp.ClientSession(timeout=timeout, headers=headers)
-                    else:
-                        self.session = aiohttp.ClientSession(timeout=timeout)
-                elif auth_type == "api_key":
-                    api_key = self.device.config.credentials.get("api_key")
-                    key_header = self.device.config.credentials.get("key_header", "X-API-Key")
-                    if api_key:
-                        headers[key_header] = api_key
-                        self.session = aiohttp.ClientSession(timeout=timeout, headers=headers)
-                    else:
-                        self.session = aiohttp.ClientSession(timeout=timeout)
+        """Initialize HTTP session with retry logic"""
+        for attempt in range(self._max_reconnect_attempts):
+            try:
+                # Create session with timeout
+                timeout = aiohttp.ClientTimeout(total=self.device.config.timeout)
+                
+                # Set up authentication headers if credentials provided
+                headers = {"User-Agent": "SmartEnergyCopilot/2.0"}
+                auth = None
+                
+                if self.device.config.credentials:
+                    auth_type = self.device.config.credentials.get("auth_type", "basic")
+                    if auth_type == "basic":
+                        username = self.device.config.credentials.get("username")
+                        password = self.device.config.credentials.get("password")
+                        if username and password:
+                            auth = aiohttp.BasicAuth(username, password)
+                    elif auth_type == "bearer":
+                        token = self.device.config.credentials.get("token")
+                        if token:
+                            headers["Authorization"] = f"Bearer {token}"
+                    elif auth_type == "api_key":
+                        api_key = self.device.config.credentials.get("api_key")
+                        key_header = self.device.config.credentials.get("key_header", "X-API-Key")
+                        if api_key:
+                            headers[key_header] = api_key
+
+                # Create session
+                connector = aiohttp.TCPConnector(limit=10, limit_per_host=5)
+                self.session = aiohttp.ClientSession(
+                    timeout=timeout, 
+                    headers=headers, 
+                    auth=auth,
+                    connector=connector
+                )
+
+                # Test connection with ping
+                if await self.ping():
+                    self._set_connected(True)
+                    self._clear_error()
+                    self._reconnect_attempts = 0
+                    self.logger.info(f"HTTP connected to {self.base_url} on attempt {attempt + 1}")
+                    return True
                 else:
-                    self.session = aiohttp.ClientSession(timeout=timeout)
-            else:
-                self.session = aiohttp.ClientSession(timeout=timeout)
+                    if attempt < self._max_reconnect_attempts - 1:
+                        await self.session.close()
+                        self.session = None
+                        await asyncio.sleep(2 ** attempt)  # Exponential backoff
+                        self.logger.warning(f"HTTP connection test failed, retrying... (attempt {attempt + 1})")
+                    else:
+                        self._set_error("HTTP connection test failed after all retries")
+                        if self.session:
+                            await self.session.close()
+                            self.session = None
+                        return False
 
-            # Test connection with ping
-            if await self.ping():
-                self._set_connected(True)
-                self._clear_error()
-                return True
-            else:
-                self._set_error("HTTP connection test failed")
-                return False
-
-        except Exception as e:
-            self._set_error(f"HTTP connection failed: {str(e)}")
-            return False
+            except Exception as e:
+                error_msg = f"HTTP connection failed: {str(e)} (attempt {attempt + 1})"
+                self.logger.warning(error_msg)
+                if self.session:
+                    await self.session.close()
+                    self.session = None
+                if attempt < self._max_reconnect_attempts - 1:
+                    await asyncio.sleep(2 ** attempt)
+                else:
+                    self._set_error(error_msg)
+                    return False
+        
+        return False
 
     async def disconnect(self) -> bool:
         """Close HTTP session"""
@@ -88,65 +110,127 @@ class HTTPHandler(BaseProtocolHandler):
             return False
 
     async def read_data(self) -> Optional[SensorReading]:
-        """Read sensor data via HTTP GET request"""
+        """Read sensor data via HTTP GET request with retry logic"""
         if not self.session or not self.is_connected:
             return None
 
-        try:
-            # Make GET request to data endpoint
-            data_url = urljoin(self.base_url, "/data")
-            async with self.session.get(data_url) as response:
-                if response.status == 200:
-                    data = await response.json()
+        for attempt in range(self._max_reconnect_attempts):
+            try:
+                # Make GET request to data endpoint
+                data_url = urljoin(self.base_url, "/data")
+                async with self.session.get(data_url) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        
+                        # Parse response into SensorReading
+                        readings_data = data.get("readings", {})
+                        readings = SensorReadings(**readings_data)
+                        
+                        sensor_reading = SensorReading(
+                            sensor_id=self.device.device_id,
+                            device_type=self.device.device_type,
+                            timestamp=datetime.fromisoformat(data.get("timestamp", datetime.utcnow().isoformat())),
+                            readings=readings,
+                            quality_score=data.get("quality_score", 1.0),
+                            location=self.device.location
+                        )
+                        
+                        # Update device last seen
+                        self.device.last_seen = datetime.utcnow()
+                        return sensor_reading
+                    elif response.status == 404:
+                        # Device might not support /data endpoint, try alternative
+                        alt_url = urljoin(self.base_url, "/sensors")
+                        async with self.session.get(alt_url) as alt_response:
+                            if alt_response.status == 200:
+                                data = await alt_response.json()
+                                readings_data = data.get("readings", {})
+                                readings = SensorReadings(**readings_data)
+                                
+                                sensor_reading = SensorReading(
+                                    sensor_id=self.device.device_id,
+                                    device_type=self.device.device_type,
+                                    timestamp=datetime.fromisoformat(data.get("timestamp", datetime.utcnow().isoformat())),
+                                    readings=readings,
+                                    quality_score=data.get("quality_score", 1.0),
+                                    location=self.device.location
+                                )
+                                
+                                self.device.last_seen = datetime.utcnow()
+                                return sensor_reading
+                    elif response.status >= 500:
+                        # Server error, retry
+                        if attempt < self._max_reconnect_attempts - 1:
+                            self.logger.warning(f"HTTP server error {response.status}, retrying... (attempt {attempt + 1})")
+                            await asyncio.sleep(2 ** attempt)
+                            continue
                     
-                    # Parse response into SensorReading
-                    readings_data = data.get("readings", {})
-                    readings = SensorReadings(**readings_data)
-                    
-                    sensor_reading = SensorReading(
-                        sensor_id=self.device.device_id,
-                        device_type=self.device.device_type,
-                        timestamp=datetime.fromisoformat(data.get("timestamp", datetime.utcnow().isoformat())),
-                        readings=readings,
-                        quality_score=data.get("quality_score", 1.0),
-                        location=self.device.location
-                    )
-                    
-                    # Update device last seen
-                    self.device.last_seen = datetime.utcnow()
-                    return sensor_reading
-                else:
                     self._set_error(f"HTTP request failed with status {response.status}")
                     return None
 
-        except Exception as e:
-            self._set_error(f"HTTP read data failed: {str(e)}")
-            return None
+            except aiohttp.ClientError as e:
+                if attempt < self._max_reconnect_attempts - 1:
+                    self.logger.warning(f"HTTP client error: {e}, retrying... (attempt {attempt + 1})")
+                    await asyncio.sleep(2 ** attempt)
+                    continue
+                else:
+                    self._set_error(f"HTTP read data failed: {str(e)}")
+                    return None
+            except Exception as e:
+                self._set_error(f"HTTP read data failed: {str(e)}")
+                return None
+        
+        return None
 
     async def ping(self) -> bool:
-        """Ping device via HTTP health check"""
+        """Ping device via HTTP health check with multiple fallbacks"""
         if not self.session:
             return False
 
+        # List of endpoints to try for health check
+        health_endpoints = ["/health", "/status", "/ping", "/api/health", "/"]
+        
+        for endpoint in health_endpoints:
+            try:
+                url = urljoin(self.base_url, endpoint)
+                async with self.session.get(url) as response:
+                    # Accept any response that's not a server error
+                    if response.status < 500:
+                        return True
+                        
+            except aiohttp.ClientError:
+                # Try next endpoint
+                continue
+            except Exception:
+                # Try next endpoint
+                continue
+        
+        # If all endpoints failed, device is likely offline
+        return False
+
+    async def send_command(self, command: Dict[str, Any]) -> bool:
+        """Send command to HTTP device via POST request"""
+        if not self.session or not self.is_connected:
+            return False
+        
         try:
-            # Try health check endpoint first
-            health_url = urljoin(self.base_url, "/health")
-            async with self.session.get(health_url) as response:
-                if response.status == 200:
+            command_url = urljoin(self.base_url, "/command")
+            command_data = {
+                "command": command,
+                "timestamp": datetime.utcnow().isoformat(),
+                "source": "energy_copilot"
+            }
+            
+            async with self.session.post(command_url, json=command_data) as response:
+                if response.status in [200, 201, 202]:
+                    self.logger.info(f"Command sent to device {self.device.device_id}: {command}")
                     return True
+                else:
+                    self.logger.error(f"Failed to send command to device {self.device.device_id}, status: {response.status}")
+                    return False
                     
-            # Fallback to status endpoint
-            status_url = urljoin(self.base_url, "/status")
-            async with self.session.get(status_url) as response:
-                if response.status == 200:
-                    return True
-                    
-            # Fallback to root endpoint
-            async with self.session.get(self.base_url) as response:
-                return response.status < 500  # Accept any non-server error
-                
         except Exception as e:
-            self.logger.debug(f"HTTP ping failed: {e}")
+            self.logger.error(f"Error sending command to device {self.device.device_id}: {e}")
             return False
 
     async def discover_devices(self, network_range: str = "192.168.1.0/24", 

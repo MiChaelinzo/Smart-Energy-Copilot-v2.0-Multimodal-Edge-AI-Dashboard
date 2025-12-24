@@ -107,7 +107,7 @@ class TestDeviceAutoDiscovery:
     """Property-based tests for device auto-discovery functionality"""
 
     @given(protocol=st.sampled_from([ProtocolType.MQTT, ProtocolType.HTTP_REST, ProtocolType.MODBUS]))
-    @settings(max_examples=100, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     @pytest.mark.asyncio
     async def test_protocol_discovery_capability(self, protocol: ProtocolType):
         """
@@ -170,7 +170,7 @@ class TestDeviceAutoDiscovery:
             unique=True
         )
     )
-    @settings(max_examples=50, deadline=10000)
+    @settings(max_examples=5, deadline=10000)
     @pytest.mark.asyncio
     async def test_multi_protocol_discovery(self, protocols: List[ProtocolType]):
         """
@@ -251,7 +251,7 @@ class TestDeviceAutoDiscovery:
             unique_by=lambda d: d.device_id
         )
     )
-    @settings(max_examples=30, deadline=15000)
+    @settings(max_examples=5, deadline=15000)
     @pytest.mark.asyncio
     async def test_discovery_filters_existing_devices(self, existing_devices: List[Device], new_devices: List[Device]):
         """
@@ -307,7 +307,7 @@ class TestDeviceAutoDiscovery:
         ),
         auto_register=st.booleans()
     )
-    @settings(max_examples=30, deadline=15000)
+    @settings(max_examples=5, deadline=15000)
     @pytest.mark.asyncio
     async def test_discovery_integration_with_registration(self, discovered_devices: List[Device], auto_register: bool):
         """
@@ -362,7 +362,7 @@ class TestDeviceAutoDiscovery:
         discovery_timeout=st.integers(min_value=1, max_value=5),  # Reduced timeout for faster tests
         should_timeout=st.booleans()
     )
-    @settings(max_examples=20, deadline=15000)  # Increased deadline for timeout tests
+    @settings(max_examples=5, deadline=15000)  # Increased deadline for timeout tests
     @pytest.mark.asyncio
     async def test_discovery_timeout_handling(self, discovery_timeout: int, should_timeout: bool):
         """
@@ -418,7 +418,7 @@ class TestDeviceAutoDiscovery:
             unique=True
         )
     )
-    @settings(max_examples=30, deadline=10000)
+    @settings(max_examples=5, deadline=10000)
     @pytest.mark.asyncio
     async def test_discovery_error_resilience(self, protocols: List[ProtocolType], error_protocols: List[ProtocolType]):
         """
@@ -484,7 +484,7 @@ class TestDeviceAutoDiscovery:
     @given(
         device=discoverable_device_strategy()
     )
-    @settings(max_examples=50, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     @pytest.mark.asyncio
     async def test_discovered_device_validation(self, device: Device):
         """

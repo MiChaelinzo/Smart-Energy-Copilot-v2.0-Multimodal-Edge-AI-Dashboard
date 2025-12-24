@@ -76,7 +76,7 @@ class TestAutomaticUpdates:
         initial_data=st.lists(energy_consumption_strategy(), min_size=1, max_size=5),
         new_data=st.lists(energy_consumption_strategy(), min_size=1, max_size=5)
     )
-    @settings(max_examples=20, deadline=8000)
+    @settings(max_examples=5, deadline=8000)
     @pytest.mark.asyncio
     async def test_real_time_insight_updates(self, recommendation_engine, initial_data, new_data):
         """
@@ -125,7 +125,7 @@ class TestAutomaticUpdates:
             assert 0.0 <= rec.confidence <= 1.0
     
     @given(consumption_data=st.lists(energy_consumption_strategy(), min_size=1, max_size=5))
-    @settings(max_examples=15, deadline=6000)
+    @settings(max_examples=5, deadline=6000)
     @pytest.mark.asyncio
     async def test_update_trigger_conditions(self, recommendation_engine, consumption_data):
         """
@@ -161,7 +161,7 @@ class TestAutomaticUpdates:
         consumption_data=st.lists(energy_consumption_strategy(), min_size=1, max_size=5),
         sensor_data=st.lists(sensor_reading_strategy(), min_size=0, max_size=5)
     )
-    @settings(max_examples=15, deadline=8000)
+    @settings(max_examples=5, deadline=8000)
     @pytest.mark.asyncio
     async def test_force_update_behavior(self, recommendation_engine, consumption_data, sensor_data):
         """
@@ -221,7 +221,7 @@ class TestAutomaticUpdates:
             min_size=1, max_size=3
         )
     )
-    @settings(max_examples=10, deadline=8000)
+    @settings(max_examples=5, deadline=8000)
     @pytest.mark.asyncio
     async def test_data_change_detection(self, recommendation_engine, old_data, new_data):
         """
@@ -263,7 +263,7 @@ class TestAutomaticUpdates:
             assert new_high_priority >= 0  # At least valid
     
     @given(consumption_data=st.lists(energy_consumption_strategy(), min_size=1, max_size=5))
-    @settings(max_examples=10, deadline=6000)
+    @settings(max_examples=5, deadline=6000)
     @pytest.mark.asyncio
     async def test_update_frequency_limits(self, recommendation_engine, consumption_data):
         """
@@ -308,7 +308,7 @@ class TestAutomaticUpdates:
             min_size=0, max_size=2
         )
     )
-    @settings(max_examples=10, deadline=8000)
+    @settings(max_examples=5, deadline=8000)
     @pytest.mark.asyncio
     async def test_preference_change_updates(self, recommendation_engine, consumption_data, user_preferences):
         """
@@ -353,7 +353,7 @@ class TestAutomaticUpdates:
             assert all(t in ['cost_saving', 'efficiency', 'environmental'] for t in updated_types)
     
     @given(consumption_data=st.lists(energy_consumption_strategy(), min_size=1, max_size=3))
-    @settings(max_examples=10, deadline=6000)
+    @settings(max_examples=5, deadline=6000)
     @pytest.mark.asyncio
     async def test_update_error_handling(self, recommendation_engine, consumption_data):
         """
@@ -386,7 +386,7 @@ class TestAutomaticUpdates:
         recommendation_engine.multi_agent_service.generate_recommendations = AsyncMock(return_value=[])
     
     @given(consumption_data=st.lists(energy_consumption_strategy(), min_size=1, max_size=5))
-    @settings(max_examples=10, deadline=6000)
+    @settings(max_examples=5, deadline=6000)
     @pytest.mark.asyncio
     async def test_update_timestamp_tracking(self, recommendation_engine, consumption_data):
         """

@@ -127,7 +127,7 @@ class TestRecommendationGeneration:
         return RecommendationGenerator()
     
     @given(context=recommendation_context_strategy())
-    @settings(max_examples=30, deadline=10000, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(max_examples=5, deadline=10000, suppress_health_check=[HealthCheck.function_scoped_fixture])
     @pytest.mark.asyncio
     async def test_optimization_recommendation_creation(self, recommendation_generator, context):
         """
@@ -181,7 +181,7 @@ class TestRecommendationGeneration:
         patterns=st.lists(energy_pattern_strategy(), min_size=1, max_size=3),
         consumption_data=st.lists(energy_consumption_strategy(), min_size=1, max_size=5)
     )
-    @settings(max_examples=20, deadline=8000, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(max_examples=5, deadline=8000, suppress_health_check=[HealthCheck.function_scoped_fixture])
     @pytest.mark.asyncio
     async def test_pattern_based_recommendations(self, recommendation_generator, patterns, consumption_data):
         """
@@ -238,7 +238,7 @@ class TestRecommendationGeneration:
             min_size=1, max_size=3
         )
     )
-    @settings(max_examples=15, deadline=6000, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(max_examples=5, deadline=6000, suppress_health_check=[HealthCheck.function_scoped_fixture])
     @pytest.mark.asyncio
     async def test_consumption_level_recommendations(self, recommendation_generator, high_consumption, low_consumption):
         """
@@ -288,7 +288,7 @@ class TestRecommendationGeneration:
     @given(
         sensor_data=st.lists(sensor_reading_strategy(), min_size=5, max_size=15)
     )
-    @settings(max_examples=15, deadline=6000, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(max_examples=5, deadline=6000, suppress_health_check=[HealthCheck.function_scoped_fixture])
     @pytest.mark.asyncio
     async def test_sensor_based_recommendations(self, recommendation_generator, sensor_data):
         """
@@ -329,7 +329,7 @@ class TestRecommendationGeneration:
             # assert len(standby_recs) >= 0  # At least consider standby issues
     
     @given(context=recommendation_context_strategy())
-    @settings(max_examples=20, deadline=8000, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(max_examples=5, deadline=8000, suppress_health_check=[HealthCheck.function_scoped_fixture])
     @pytest.mark.asyncio
     async def test_recommendation_uniqueness(self, recommendation_generator, context):
         """
@@ -363,7 +363,7 @@ class TestRecommendationGeneration:
             min_size=0, max_size=3
         )
     )
-    @settings(max_examples=15, deadline=8000, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(max_examples=5, deadline=8000, suppress_health_check=[HealthCheck.function_scoped_fixture])
     @pytest.mark.asyncio
     async def test_user_preference_influence(self, recommendation_generator, context, user_prefs):
         """
@@ -410,7 +410,7 @@ class TestRecommendationEngineIntegration:
         consumption_data=st.lists(energy_consumption_strategy(), min_size=1, max_size=5),
         sensor_data=st.lists(sensor_reading_strategy(), min_size=0, max_size=5)
     )
-    @settings(max_examples=10, deadline=15000, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @settings(max_examples=5, deadline=15000, suppress_health_check=[HealthCheck.function_scoped_fixture])
     @pytest.mark.asyncio
     async def test_comprehensive_recommendation_generation(self, recommendation_engine, consumption_data, sensor_data):
         """

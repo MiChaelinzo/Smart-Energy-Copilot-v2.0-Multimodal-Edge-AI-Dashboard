@@ -1,0 +1,173 @@
+version: '3.8'
+
+services:
+  smart-energy-copilot-edge:
+    build:
+      context: .
+      dockerfile: Dockerfile.edge
+      args:
+        TARGETPLATFORM: linux/arm64
+    container_name: energy-copilot-edge
+    restart: unless-stopped
+    
+    # Resource limits for RDK X5
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '1.0'
+    
+    # Environment variables for edge deployment
+    environment:
+      - EDGE_DEPLOYMENT=true
+      - OFFLINE_MODE=true
+      - CLOUD_DEPENDENCIES=false
+      - DATA_DIR=/app/data
+      - MODEL_CACHE_DIR=/app/models
+      - LOG_LEVEL=INFO
+      - PYTHONUNBUFFERED=1
+      - TORCH_QUANTIZATION=true
+      - MODEL_PRECISION=fp16
+    
+    # Volumes for persistent data
+    volumes:
+      - energy_data:/app/data
+      - model_cache:/app/models
+      - energy_logs:/app/logs
+      - update_cache:/app/updates
+      - /sys/class/thermal:/sys/class/thermal:ro  # For temperature monitoring
+    
+    # Network configuration
+    ports:
+      - "8000:8000"  # Main API
+      - "8001:8001"  # WebSocket for real-time updates
+    
+    # Health check configuration
+    healthcheck:
+      test: ["CMD", "python", "/app/healthcheck.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    # Security settings
+    security_opt:
+      - no-new-privileges:true
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Dependencies
+    depends_on:
+      - edge-monitor
+
+  # System monitoring service
+  edge-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile.monitor
+    container_name: energy-copilot-monitor
+    restart: unless-stopped
+    
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+    
+    environment:
+      - MONITOR_INTERVAL=30
+      - ALERT_THRESHOLDS_CPU=80
+      - ALERT_THRESHOLDS_MEMORY=85
+      - ALERT_THRESHOLDS_TEMP=75
+    
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+      - energy_logs:/app/logs
+    
+    privileged: true  # Required for system monitoring
+    
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "monitor"]
+      interval: 60s
+      timeout: 5s
+      retries: 2
+
+  # Optional: Local update server for privacy-preserving updates
+  update-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.update-server
+    container_name: energy-copilot-updates
+    restart: unless-stopped
+    
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    
+    environment:
+      - UPDATE_CHECK_INTERVAL=3600  # Check every hour
+      - PRIVACY_MODE=true
+      - LOCAL_UPDATES_ONLY=true
+    
+    volumes:
+      - update_cache:/app/updates
+      - energy_logs:/app/logs
+    
+    ports:
+      - "8002:8002"  # Update server port
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 60s
+      timeout: 5s
+      retries: 2
+
+# Named volumes for persistent storage
+volumes:
+  energy_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data
+  
+  model_cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./models
+  
+  energy_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./logs
+  
+  update_cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./updates
+
+# Network configuration
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

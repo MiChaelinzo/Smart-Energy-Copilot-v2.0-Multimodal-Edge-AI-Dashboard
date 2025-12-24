@@ -1,0 +1,1 @@
+"""Integration tests for Smart Energy Copilot v2.0."""

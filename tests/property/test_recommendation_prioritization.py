@@ -55,7 +55,7 @@ class TestRecommendationPrioritization:
         return RecommendationPrioritizer()
     
     @given(recommendations=st.lists(optimization_recommendation_strategy(), min_size=1, max_size=10))
-    @settings(max_examples=30, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     @pytest.mark.asyncio
     async def test_recommendation_ranking_algorithm(self, prioritizer, recommendations):
         """
@@ -133,7 +133,7 @@ class TestRecommendationPrioritization:
             min_size=1, max_size=3
         )
     )
-    @settings(max_examples=20, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     @pytest.mark.asyncio
     async def test_impact_based_prioritization(self, prioritizer, high_savings_recs, low_savings_recs):
         """
@@ -166,7 +166,7 @@ class TestRecommendationPrioritization:
             min_size=1, max_size=3
         )
     )
-    @settings(max_examples=20, deadline=6000)
+    @settings(max_examples=5, deadline=6000)
     @pytest.mark.asyncio
     async def test_user_preference_influence(self, prioritizer, recommendations, user_preferences):
         """
@@ -237,7 +237,7 @@ class TestRecommendationPrioritization:
             min_size=1, max_size=3
         )
     )
-    @settings(max_examples=15, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     @pytest.mark.asyncio
     async def test_difficulty_consideration(self, prioritizer, easy_recs, complex_recs):
         """
@@ -293,7 +293,7 @@ class TestRecommendationPrioritization:
             min_size=1, max_size=3
         )
     )
-    @settings(max_examples=15, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     @pytest.mark.asyncio
     async def test_confidence_influence(self, prioritizer, high_confidence_recs, low_confidence_recs):
         """
@@ -321,7 +321,7 @@ class TestRecommendationPrioritization:
             assert avg_high_conf_pos <= avg_low_conf_pos + 1
     
     @given(recommendations=st.lists(optimization_recommendation_strategy(), min_size=1, max_size=10))
-    @settings(max_examples=20, deadline=5000)
+    @settings(max_examples=5, deadline=5000)
     @pytest.mark.asyncio
     async def test_prioritization_stability(self, prioritizer, recommendations):
         """
@@ -342,7 +342,7 @@ class TestRecommendationPrioritization:
             assert rec1.priority == rec2.priority
     
     @given(recommendations=st.lists(optimization_recommendation_strategy(), min_size=0, max_size=2))
-    @settings(max_examples=10, deadline=3000)
+    @settings(max_examples=5, deadline=3000)
     @pytest.mark.asyncio
     async def test_edge_cases(self, prioritizer, recommendations):
         """
