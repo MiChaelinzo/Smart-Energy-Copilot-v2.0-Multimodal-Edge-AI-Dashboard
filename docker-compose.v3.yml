@@ -1,0 +1,26 @@
+services:
+  energy-copilot-v3:
+    build: .
+    depends_on:
+    - redis
+    environment:
+    - ADVANCED_FEATURES=true
+    - FORECASTING_ENABLED=true
+    - SMART_HOME_ENABLED=true
+    - VOICE_ASSISTANT_ENABLED=true
+    - VISUALIZATION_3D_ENABLED=true
+    ports:
+    - 8000:8000
+    volumes:
+    - ./data:/app/data
+    - ./models:/app/models
+    - ./config:/app/config
+  redis:
+    image: redis:7-alpine
+    ports:
+    - 6379:6379
+    volumes:
+    - redis_data:/data
+version: '3.8'
+volumes:
+  redis_data: {}

@@ -1,0 +1,36 @@
+{
+  "forecasting": {
+    "enabled": true,
+    "weather_api_key": null,
+    "model_path": "models/forecasting"
+  },
+  "smart_home": {
+    "enabled": true,
+    "protocols": [
+      "zigbee",
+      "zwave",
+      "matter",
+      "wifi"
+    ],
+    "discovery_timeout": 30
+  },
+  "voice_assistant": {
+    "enabled": true,
+    "platforms": [
+      "alexa",
+      "google",
+      "siri"
+    ],
+    "language": "en-US"
+  },
+  "enterprise": {
+    "enabled": false,
+    "multi_tenant": false,
+    "redis_url": "redis://localhost:6379"
+  },
+  "visualization_3d": {
+    "enabled": true,
+    "render_mode": "webgl",
+    "max_objects": 1000
+  }
+}
