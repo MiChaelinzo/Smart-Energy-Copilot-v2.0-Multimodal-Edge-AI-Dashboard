@@ -10,6 +10,7 @@ import {
   Chip,
   Alert,
   Snackbar,
+  Tooltip,
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
@@ -17,52 +18,61 @@ import {
   Settings as SettingsIcon,
   WifiOff as WifiOffIcon,
   Wifi as WifiIcon,
+  DarkMode as DarkModeIcon,
+  LightMode as LightModeIcon,
 } from '@mui/icons-material';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import { useDashboard } from '../contexts/DashboardContext';
 import { useWebSocket } from '../contexts/WebSocketContext';
+import { useThemeMode } from '../App';
 import EnergyOverviewWidget from '../components/widgets/EnergyOverviewWidget';
 import ConsumptionChartWidget from '../components/widgets/ConsumptionChartWidget';
 import RecommendationsWidget from '../components/widgets/RecommendationsWidget';
 import DeviceStatusWidget from '../components/widgets/DeviceStatusWidget';
 import CostAnalysisWidget from '../components/widgets/CostAnalysisWidget';
+import AlertsWidget from '../components/widgets/AlertsWidget';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 const Dashboard: React.FC = () => {
   const { state, refreshData } = useDashboard();
   const { isConnected } = useWebSocket();
+  const { mode, toggleTheme } = useThemeMode();
   const [showError, setShowError] = useState(false);
 
   // Default layout configuration
   const defaultLayouts = {
     lg: [
-      { i: 'energy-overview', x: 0, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
-      { i: 'recommendations', x: 6, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
+      { i: 'energy-overview', x: 0, y: 0, w: 4, h: 4, minW: 3, minH: 3 },
+      { i: 'alerts', x: 4, y: 0, w: 4, h: 4, minW: 3, minH: 3 },
+      { i: 'recommendations', x: 8, y: 0, w: 4, h: 4, minW: 3, minH: 3 },
       { i: 'consumption-chart', x: 0, y: 4, w: 12, h: 6, minW: 8, minH: 4 },
       { i: 'device-status', x: 0, y: 10, w: 6, h: 4, minW: 4, minH: 3 },
       { i: 'cost-analysis', x: 6, y: 10, w: 6, h: 4, minW: 4, minH: 3 },
     ],
     md: [
-      { i: 'energy-overview', x: 0, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
-      { i: 'recommendations', x: 6, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
+      { i: 'energy-overview', x: 0, y: 0, w: 4, h: 4, minW: 4, minH: 3 },
+      { i: 'alerts', x: 4, y: 0, w: 4, h: 4, minW: 4, minH: 3 },
+      { i: 'recommendations', x: 8, y: 0, w: 4, h: 4, minW: 4, minH: 3 },
       { i: 'consumption-chart', x: 0, y: 4, w: 12, h: 6, minW: 6, minH: 4 },
       { i: 'device-status', x: 0, y: 10, w: 6, h: 4, minW: 4, minH: 3 },
       { i: 'cost-analysis', x: 6, y: 10, w: 6, h: 4, minW: 4, minH: 3 },
     ],
     sm: [
       { i: 'energy-overview', x: 0, y: 0, w: 6, h: 4, minW: 4, minH: 3 },
-      { i: 'recommendations', x: 0, y: 4, w: 6, h: 4, minW: 4, minH: 3 },
-      { i: 'consumption-chart', x: 0, y: 8, w: 6, h: 6, minW: 4, minH: 4 },
-      { i: 'device-status', x: 0, y: 14, w: 6, h: 4, minW: 4, minH: 3 },
-      { i: 'cost-analysis', x: 0, y: 18, w: 6, h: 4, minW: 4, minH: 3 },
+      { i: 'alerts', x: 0, y: 4, w: 6, h: 4, minW: 4, minH: 3 },
+      { i: 'recommendations', x: 0, y: 8, w: 6, h: 4, minW: 4, minH: 3 },
+      { i: 'consumption-chart', x: 0, y: 12, w: 6, h: 6, minW: 4, minH: 4 },
+      { i: 'device-status', x: 0, y: 18, w: 6, h: 4, minW: 4, minH: 3 },
+      { i: 'cost-analysis', x: 0, y: 22, w: 6, h: 4, minW: 4, minH: 3 },
     ],
     xs: [
       { i: 'energy-overview', x: 0, y: 0, w: 4, h: 4, minW: 4, minH: 3 },
-      { i: 'recommendations', x: 0, y: 4, w: 4, h: 4, minW: 4, minH: 3 },
-      { i: 'consumption-chart', x: 0, y: 8, w: 4, h: 6, minW: 4, minH: 4 },
-      { i: 'device-status', x: 0, y: 14, w: 4, h: 4, minW: 4, minH: 3 },
-      { i: 'cost-analysis', x: 0, y: 18, w: 4, h: 4, minW: 4, minH: 3 },
+      { i: 'alerts', x: 0, y: 4, w: 4, h: 4, minW: 4, minH: 3 },
+      { i: 'recommendations', x: 0, y: 8, w: 4, h: 4, minW: 4, minH: 3 },
+      { i: 'consumption-chart', x: 0, y: 12, w: 4, h: 6, minW: 4, minH: 4 },
+      { i: 'device-status', x: 0, y: 18, w: 4, h: 4, minW: 4, minH: 3 },
+      { i: 'cost-analysis', x: 0, y: 22, w: 4, h: 4, minW: 4, minH: 3 },
     ],
   };
 
@@ -110,6 +120,13 @@ const Dashboard: React.FC = () => {
             size="small"
             sx={{ mr: 2, color: 'white', borderColor: 'white' }}
           />
+          
+          {/* Theme Toggle */}
+          <Tooltip title={mode === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}>
+            <IconButton color="inherit" onClick={toggleTheme}>
+              {mode === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
+            </IconButton>
+          </Tooltip>
           
           {/* Notifications */}
           <IconButton color="inherit">
@@ -160,6 +177,11 @@ const Dashboard: React.FC = () => {
             {/* Energy Overview Widget */}
             <div key="energy-overview">
               <EnergyOverviewWidget />
+            </div>
+
+            {/* Alerts Widget */}
+            <div key="alerts">
+              <AlertsWidget />
             </div>
 
             {/* Recommendations Widget */}

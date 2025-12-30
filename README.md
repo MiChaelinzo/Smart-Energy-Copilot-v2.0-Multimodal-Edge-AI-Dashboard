@@ -1,8 +1,28 @@
-# Smart Energy Copilot v3.0
+# Smart Energy Copilot v3.1
 
 An advanced AI-powered energy management system with comprehensive smart home automation, predictive analytics, voice control, enterprise features, and immersive 3D visualization capabilities.
 
-## 🚀 New in v3.0 - Advanced Features
+## 🆕 Latest Updates (v3.1)
+
+### ⚡ Real-Time Energy Alerts
+- **Intelligent Alert System**: Real-time notifications for consumption anomalies, budget thresholds, and device issues
+- **Configurable Rules**: Customizable alert rules with adjustable thresholds and cooldown periods
+- **Multi-Severity Levels**: Critical, warning, and info alerts for different situations
+- **Alert Management**: Acknowledge, resolve, or dismiss alerts with full tracking
+
+### 🌙 Dark Mode Support
+- **Theme Toggle**: Switch between light and dark modes
+- **System Preference Detection**: Automatically detects system color scheme preference
+- **Persistent Settings**: Theme preference saved across sessions
+- **Optimized UI**: Both themes designed for optimal readability and reduced eye strain
+
+### 📦 Updated Dependencies
+- **FastAPI 0.109.0**: Latest web framework with improved performance
+- **Pydantic v2.5.3**: Enhanced data validation
+- **React 18.2 + TypeScript 5.3**: Modern frontend with type safety
+- **Security Updates**: All dependencies updated to latest secure versions
+
+## 🚀 Features (v3.0)
 
 ### 🔮 Predictive Energy Forecasting
 - **ML-Powered Predictions**: Advanced machine learning models using Random Forest, Gradient Boosting, and time series analysis
@@ -53,6 +73,7 @@ An advanced AI-powered energy management system with comprehensive smart home au
 
 ### Core Services
 - **Energy Forecasting Service**: ML-powered prediction engine
+- **Energy Alerts Service**: Real-time alerting and notification system
 - **Smart Home Automation Service**: Multi-protocol device management
 - **Voice Assistant Service**: Natural language processing and voice control
 - **Enterprise Service**: Multi-tenant management and RBAC
@@ -60,7 +81,7 @@ An advanced AI-powered energy management system with comprehensive smart home au
 - **Mobile Backend Service**: API endpoints for mobile application
 
 ### Technology Stack
-- **Backend**: Python 3.11+, FastAPI, SQLAlchemy, Redis
+- **Backend**: Python 3.11+, FastAPI 0.109+, SQLAlchemy 2.0+, Redis
 - **AI/ML**: PyTorch, Transformers, Scikit-learn, XGBoost, LightGBM
 - **IoT**: MQTT, Modbus, HTTP REST, WebSocket
 - **Voice**: SpeechRecognition, pyttsx3, platform-specific SDKs
