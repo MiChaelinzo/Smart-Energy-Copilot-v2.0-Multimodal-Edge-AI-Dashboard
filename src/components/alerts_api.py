@@ -208,12 +208,10 @@ async def check_consumption_threshold(request: CheckConsumptionRequest):
 async def check_budget_status(request: CheckBudgetRequest):
     """Check budget status and create alert if threshold exceeded."""
     try:
-        alert = await energy_alerts_service.check_budget_status(
+        alert, budget_percent = await energy_alerts_service.check_budget_status(
             current_cost=request.current_cost,
             budget_limit=request.budget_limit
         )
-        
-        budget_percent = (request.current_cost / request.budget_limit * 100) if request.budget_limit > 0 else 0
         
         return {
             "alert_created": alert is not None,

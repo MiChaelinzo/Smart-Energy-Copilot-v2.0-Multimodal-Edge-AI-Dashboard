@@ -95,7 +95,7 @@ class TestEnergyAlertsService:
     @pytest.mark.asyncio
     async def test_check_budget_exceeded(self, alerts_service):
         """Test budget exceeded triggers critical alert."""
-        alert = await alerts_service.check_budget_status(
+        alert, budget_percent = await alerts_service.check_budget_status(
             current_cost=150.0,
             budget_limit=100.0
         )
@@ -103,11 +103,12 @@ class TestEnergyAlertsService:
         assert alert is not None
         assert alert.alert_type == AlertType.BUDGET_EXCEEDED
         assert alert.severity == AlertSeverity.CRITICAL
+        assert budget_percent == 150.0
     
     @pytest.mark.asyncio
     async def test_check_budget_warning(self, alerts_service):
         """Test budget warning triggers warning alert."""
-        alert = await alerts_service.check_budget_status(
+        alert, budget_percent = await alerts_service.check_budget_status(
             current_cost=85.0,  # 85% of budget
             budget_limit=100.0
         )
@@ -115,16 +116,18 @@ class TestEnergyAlertsService:
         assert alert is not None
         assert alert.alert_type == AlertType.BUDGET_WARNING
         assert alert.severity == AlertSeverity.WARNING
+        assert budget_percent == 85.0
     
     @pytest.mark.asyncio
     async def test_check_budget_normal(self, alerts_service):
         """Test normal budget doesn't trigger alert."""
-        alert = await alerts_service.check_budget_status(
+        alert, budget_percent = await alerts_service.check_budget_status(
             current_cost=50.0,  # 50% of budget
             budget_limit=100.0
         )
         
         assert alert is None
+        assert budget_percent == 50.0
     
     @pytest.mark.asyncio
     async def test_acknowledge_alert(self, alerts_service):
@@ -344,6 +347,16 @@ class TestEnergyAlertsService:
         assert alert_dict['severity'] == "warning"
         assert alert_dict['status'] == "active"
         assert alert_dict['device_id'] == "device_1"
+    
+    def test_calculate_budget_percent(self, alerts_service):
+        """Test budget percentage calculation."""
+        # Normal calculation
+        assert alerts_service.calculate_budget_percent(50.0, 100.0) == 50.0
+        assert alerts_service.calculate_budget_percent(100.0, 100.0) == 100.0
+        assert alerts_service.calculate_budget_percent(150.0, 100.0) == 150.0
+        
+        # Edge case: zero budget limit
+        assert alerts_service.calculate_budget_percent(50.0, 0) == 0
 
 
 if __name__ == "__main__":

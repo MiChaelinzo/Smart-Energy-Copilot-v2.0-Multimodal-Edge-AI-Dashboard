@@ -174,7 +174,7 @@ class EnergyAlertsService:
                 condition="gt",
                 threshold=self.default_thresholds["peak_usage_kwh"],
                 duration_minutes=5,
-                severity=AlertSeverity.INFO,
+                severity=AlertSeverity.WARNING,
                 enabled=True,
                 notification_channels=["push"],
                 cooldown_minutes=30,
@@ -316,15 +316,19 @@ class EnergyAlertsService:
         self,
         current_cost: float,
         budget_limit: float
-    ) -> Optional[EnergyAlert]:
-        """Check budget status and create alert if threshold exceeded."""
-        budget_percent = (current_cost / budget_limit) * 100 if budget_limit > 0 else 0
+    ) -> tuple[Optional[EnergyAlert], float]:
+        """Check budget status and create alert if threshold exceeded.
+        
+        Returns:
+            Tuple of (alert if created, budget_percent)
+        """
+        budget_percent = self.calculate_budget_percent(current_cost, budget_limit)
         
         warning_threshold = self.default_thresholds["budget_warning_percent"]
         exceeded_threshold = self.default_thresholds["budget_exceeded_percent"]
         
         if budget_percent >= exceeded_threshold:
-            return await self.create_alert(
+            alert = await self.create_alert(
                 alert_type=AlertType.BUDGET_EXCEEDED,
                 severity=AlertSeverity.CRITICAL,
                 title="Energy Budget Exceeded",
@@ -333,8 +337,9 @@ class EnergyAlertsService:
                 threshold=budget_limit,
                 metadata={"budget_percent": budget_percent, "overage": current_cost - budget_limit}
             )
+            return alert, budget_percent
         elif budget_percent >= warning_threshold:
-            return await self.create_alert(
+            alert = await self.create_alert(
                 alert_type=AlertType.BUDGET_WARNING,
                 severity=AlertSeverity.WARNING,
                 title="Budget Warning",
@@ -343,8 +348,14 @@ class EnergyAlertsService:
                 threshold=budget_limit,
                 metadata={"budget_percent": budget_percent, "remaining": budget_limit - current_cost}
             )
+            return alert, budget_percent
         
-        return None
+        return None, budget_percent
+    
+    @staticmethod
+    def calculate_budget_percent(current_cost: float, budget_limit: float) -> float:
+        """Calculate budget percentage used."""
+        return (current_cost / budget_limit) * 100 if budget_limit > 0 else 0
     
     async def check_device_status(
         self,
