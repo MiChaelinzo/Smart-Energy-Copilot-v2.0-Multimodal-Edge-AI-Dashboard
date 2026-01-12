@@ -11,6 +11,7 @@ torch==2.8.0
 transformers==4.53.0
 paddlepaddle==2.6.2
 paddleocr==2.7.1
+camel-ai==0.2.82
 
 # IoT and communication
 paho-mqtt==1.6.1

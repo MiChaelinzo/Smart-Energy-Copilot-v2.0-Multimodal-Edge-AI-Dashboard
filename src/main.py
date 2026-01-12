@@ -9,6 +9,7 @@ from src.components.ocr_api import router as ocr_router
 from src.components.ai_api import router as ai_router
 from src.components.health_api import router as health_router
 from src.components.alerts_api import router as alerts_router
+from src.components.camel_api import router as camel_router
 from src.services.system_monitor import system_monitor
 from src.services.energy_alerts import energy_alerts_service
 
@@ -38,6 +39,7 @@ app.include_router(ocr_router)
 app.include_router(ai_router)
 app.include_router(health_router)
 app.include_router(alerts_router)
+app.include_router(camel_router)
 
 
 @app.on_event("startup")
