@@ -10,6 +10,11 @@ An advanced AI-powered energy management system with comprehensive smart home au
 - **Multi-Severity Levels**: Critical, warning, and info alerts for different situations
 - **Alert Management**: Acknowledge, resolve, or dismiss alerts with full tracking
 
+### 🐫 Camel-AI Playbook (edge-safe)
+- **Endpoint**: `POST /api/v1/camel/playbook`
+- **Input**: goal + optional metrics snapshot
+- **Output**: Deterministic Camel-style conversation and focus areas; toggled via `CAMEL_ENABLED`
+
 ### 🌙 Dark Mode Support
 - **Theme Toggle**: Switch between light and dark modes
 - **System Preference Detection**: Automatically detects system color scheme preference

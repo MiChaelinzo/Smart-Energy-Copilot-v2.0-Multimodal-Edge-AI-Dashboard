@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 import logging
 
@@ -12,7 +12,7 @@ try:
     from camel.messages import BaseMessage
 
     _camel_available = True
-except Exception:
+except ModuleNotFoundError:
     BaseMessage = None  # type: ignore
     _camel_available = False
 
@@ -45,7 +45,7 @@ class CamelEnergyPlaybook:
             "summary": summary,
             "focus_areas": focus_areas,
             "conversation": conversation,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
         }
 
     def _derive_focus_areas(self, metrics: Dict[str, float]) -> List[Dict[str, object]]:
