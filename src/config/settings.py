@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     model_path: str = Field(default="models/", validation_alias="MODEL_PATH")
     model_cache_size: int = Field(default=1024, validation_alias="MODEL_CACHE_SIZE")  # MB
     
+    # Camel-AI
+    camel_enabled: bool = Field(default=True, validation_alias="CAMEL_ENABLED")
+    camel_goal: str = Field(default="drive edge-optimized, multimodal energy intelligence", validation_alias="CAMEL_GOAL")
+    
     # ERNIE Model
     ernie_model_path: str = Field(default="models/ernie-energy", validation_alias="ERNIE_MODEL_PATH")
     ernie_max_sequence_length: int = Field(default=512, validation_alias="ERNIE_MAX_SEQUENCE_LENGTH")
