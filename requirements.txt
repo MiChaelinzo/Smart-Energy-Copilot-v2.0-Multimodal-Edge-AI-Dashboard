@@ -64,7 +64,7 @@ plotly==5.18.0
 # Web and API enhancements
 aiohttp==3.13.3
 websockets==12.0
-python-multipart==0.0.18
+python-multipart==0.0.22
 
 # Mobile app backend support
 flask-cors==6.0.0
